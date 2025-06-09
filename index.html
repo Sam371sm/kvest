@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Квест для Ивана: Путь к Взрослости. 19 лет. </title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .quest-container {
+            max-width: 800px;
+            width: 90%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .quest-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="stars" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23stars)"/></svg>');
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+            border-radius: 4px;
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .screen {
+            display: none;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { 
+                opacity: 0; 
+                transform: translateY(20px);
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0);
+            }
+        }
+
+        .title {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #fff, #4facfe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(79, 172, 254, 0.5);
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .location-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            color: #4facfe;
+            text-align: center;
+        }
+
+        .question {
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+            text-align: center;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .option {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .option::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .option:hover::before {
+            left: 100%;
+        }
+
+        .option:hover {
+            transform: translateY(-2px);
+            border-color: #4facfe;
+            box-shadow: 0 5px 20px rgba(79, 172, 254, 0.3);
+        }
+
+        .option.correct {
+            background: rgba(46, 204, 113, 0.2);
+            border-color: #2ecc71;
+            animation: correctPulse 0.6s ease-out;
+        }
+
+        .option.wrong {
+            background: rgba(231, 76, 60, 0.2);
+            border-color: #e74c3c;
+            animation: wrongShake 0.6s ease-out;
+        }
+
+        @keyframes correctPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes wrongShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .explanation {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-left: 4px solid #4facfe;
+            display: none;
+            animation: slideDown 0.5s ease-out;
+        }
+
+        .explanation.show {
+            display: block;
+        }
+
+        .error-message {
+            background: rgba(231, 76, 60, 0.2);
+            border: 2px solid #e74c3c;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            text-align: center;
+            display: none;
+            animation: errorBounce 0.8s ease-out;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        @keyframes errorBounce {
+            0% { 
+                opacity: 0; 
+                transform: scale(0.8) translateY(-10px);
+            }
+            50% { 
+                transform: scale(1.05) translateY(0);
+            }
+            100% { 
+                opacity: 1; 
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        @keyframes slideDown {
+            from { 
+                opacity: 0; 
+                max-height: 0; 
+                transform: translateY(-10px);
+            }
+            to { 
+                opacity: 1; 
+                max-height: 200px;
+                transform: translateY(0);
+            }
+        }
+
+        .next-btn {
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            border: none;
+            border-radius: 50px;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: none;
+            margin: 2rem auto 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .next-btn.show {
+            display: block;
+        }
+
+        .next-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(79, 172, 254, 0.4);
+        }
+
+        .next-btn:active {
+            transform: translateY(0);
+        }
+
+        .retry-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            border: none;
+            border-radius: 50px;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: none;
+            margin: 1rem auto 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .retry-btn.show {
+            display: block;
+        }
+
+        .retry-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(255, 107, 107, 0.4);
+        }
+
+        .start-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 50px;
+            padding: 1.5rem 3rem;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 2rem auto;
+            display: block;
+        }
+
+        .start-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .final-message {
+            text-align: center;
+            font-size: 1.4rem;
+            line-height: 1.8;
+        }
+
+        .emoji {
+            font-size: 3rem;
+            margin: 1rem 0;
+            display: block;
+            text-align: center;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        .location-counter {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .quest-container {
+                padding: 1.5rem;
+                margin: 1rem;
+            }
+            
+            .title {
+                font-size: 2rem;
+            }
+            
+            .options {
+                gap: 0.8rem;
+            }
+            
+            .option {
+                padding: 0.8rem 1rem;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="quest-container">
+        <div class="location-counter">
+            <span id="locationCounter">Локация 0/6</span>
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+        </div>
+
+        <!-- Стартовый экран -->
+        <div class="screen active" id="start">
+            <h1 class="title">🎮 Квест для Ивана</h1>
+            <p class="subtitle">Путь к Взрослости</p>
+            <div class="emoji">🚀</div>
+            <p style="text-align: center; font-size: 1.2rem; margin: 2rem 0;">
+                Добро пожаловать в интерактивное приключение!<br>
+                Тебе предстоит пройти 6 локаций и доказать,<br>
+                что ты готов к взрослой жизни.
+            </p>
+            <button class="start-btn" onclick="startQuest()">Начать квест</button>
+        </div>
+
+        <!-- Локация 1 -->
+        <div class="screen" id="location1">
+            <h2 class="location-title">👻 Локация 1: Призрачный Бюджет</h2>
+            <p class="question">Ты оказался в пустом кошельке. Чтобы выбраться, ответь:</p>
+            <p class="question"><strong>Сколько бы я имел сейчас, если бы откладывал по 200 USD в месяц за последние 6 месяцев?</strong></p>
+            <div class="options">
+                <div class="option" onclick="selectAnswer(this, false)">A) 750 USD</div>
+                <div class="option" onclick="selectAnswer(this, true)">B) 1200 USD </div>
+                <div class="option" onclick="selectAnswer(this, false)">C) Я бы уже всё потратил</div>
+            </div>
+            <div class="error-message">
+                😈 Ответ неверный! Твоя репутация тает! Попробуй ещё разок!
+            </div>
+            <button class="retry-btn" onclick="retryQuestion()">Попробовать снова</button>
+            <button class="next-btn" onclick="nextLocation()">Далее</button>
+        </div>
+
+        <!-- Локация 2 -->
+        <div class="screen" id="location2">
+            <h2 class="location-title">🕳️ Локация 2: Пещера Родительской Памяти</h2>
+            <p class="question"><strong>Какая инвестиция родителей в тебя за последние 2 года была самой значительной?</strong></p>
+            <div class="options">
+                <div class="option" onclick="selectAnswer(this, false)">A) Испанские тесты</div>
+                <div class="option" onclick="selectAnswer(this, false)">B) Пианино</div>
+                <div class="option" onclick="selectAnswer(this, true)">C) Брекеты </div>
+            </div>
+            <div class="explanation">
+                <p>Все инвестиции важны: пианино развивает таланты, брекеты - уверенность в себе. Родители всегда с уважением относились к твоему развитию и твоим желаниям.</p>
+                <p><strong>Важно:</strong> уважение - это дорога с двусторонним движением.</p>
+            </div>
+            <div class="error-message">
+                😈 Ответ неверный! Твоя репутация тает! Попробуй ещё разок!
+            </div>
+            <button class="retry-btn" onclick="retryQuestion()">Попробовать снова</button>
+            <button class="next-btn" onclick="nextLocation()">Далее</button>
+        </div>
+
+        <!-- Локация 3 -->
+        <div class="screen" id="location3">
+            <h2 class="location-title">🛡️ Локация 3: Рубеж Доверия</h2>
+            <p class="question"><strong>Что из этого помогает сохранить доверие в семье?</strong></p>
+            <div class="options">
+                <div class="option" onclick="selectAnswer(this, true)">A) Писать в чат, когда ночуешь не дома </div>
+                <div class="option" onclick="selectAnswer(this, false)">B) Сюрпризом исчезнуть и вернуться через сутки</div>
+                <div class="option" onclick="selectAnswer(this, false)">C) Спать под кроватью, чтоб никто не заметил</div>
+            </div>
+            <div class="error-message">
+                😈 Ответ неверный! Твоя репутация тает! Попробуй ещё разок!
+            </div>
+            <button class="retry-btn" onclick="retryQuestion()">Попробовать снова</button>
+            <button class="next-btn" onclick="nextLocation()">Далее</button>
+        </div>
+
+        <!-- Локация 4 -->
+        <div class="screen" id="location4">
+            <h2 class="location-title">🥷 Локация 4: Миссия: Взрослый ниндзя в родительском доме</h2>
+            <p class="question"><strong>Что взрослый мужчина делает, если хочет быть с девушкой, но живёт с родителями?</strong></p>
+            <div class="options">
+                <div class="option" onclick="selectAnswer(this, true)">A) Уважает правила дома и ищет варианты посуточной аренды </div>
+                <div class="option" onclick="selectAnswer(this, false)">B) Надеется на удачный момент и ждет подходящего времени</div>
+                <div class="option" onclick="selectAnswer(this, false)">C) Приглашает девушку без предупреждения</div>
+            </div>
+            <div class="error-message">
+                😈 Ответ неверный! Твоя репутация тает! Попробуй ещё разок!
+            </div>
+            <button class="retry-btn" onclick="retryQuestion()">Попробовать снова</button>
+            <button class="next-btn" onclick="nextLocation()">Далее</button>
+        </div>
+
+        <!-- Локация 5 -->
+        <div class="screen" id="location5">
+            <h2 class="location-title">🎓 Локация 5: Академия Взрослости имени Сюрпризов</h2>
+            <p class="question">Взрослая жизнь — это не только права, но и...</p>
+            <p class="question"><strong>Что из этого — признак взрослого отношения к жизни?</strong></p>
+            <div class="options">
+                <div class="option" onclick="selectAnswer(this, true)">A) Планировать карьеру, бюджет, уважать договорённости </div>
+                <div class="option" onclick="selectAnswer(this, false)">B) Где-нибудь работать, а остальное – как пойдёт</div>
+                <div class="option" onclick="selectAnswer(this, false)">C) Жить в стиле "а вдруг всё само решится"</div>
+            </div>
+            <div class="error-message">
+                😈 Ответ неверный! Твоя репутация тает! Попробуй ещё разок!
+            </div>
+            <button class="retry-btn" onclick="retryQuestion()">Попробовать снова</button>
+            <button class="next-btn" onclick="nextLocation()">Далее</button>
+        </div>
+
+        <!-- Локация 6 -->
+        <div class="screen" id="location6">
+            <h2 class="location-title">🌫️ Локация 6: Переулок Реальных Расходов</h2>
+            <p class="question">Туман накрыл город. Из него вышли цены. Ты должен вспомнить реальность, чтобы пройти дальше.</p>
+            <p class="question"><strong>Сколько в среднем составляют ежемесячные затраты на электричество и воду в Casa Blanca (февраль–май 2025)?</strong></p>
+            <div class="options">
+                <div class="option" onclick="selectAnswer(this, true)">A) Epec 50 000 ARS, Agua 30 000 ARS </div>
+                <div class="option" onclick="selectAnswer(this, false)">B) Epec 30 000 ARS, Agua 15 000 ARS</div>
+                <div class="option" onclick="selectAnswer(this, false)">C) Какая разница, всё равно я не плачу</div>
+            </div>
+            <div class="error-message">
+                😈 Ответ неверный! Твоя репутация тает! Попробуй ещё разок!
+            </div>
+            <button class="retry-btn" onclick="retryQuestion()">Попробовать снова</button>
+            <button class="next-btn" onclick="nextLocation()">Далее</button>
+        </div>
+
+        <!-- Финал -->
+        <div class="screen" id="final">
+            <h2 class="location-title">🏆 Финал: Ретейнер во плоти (300 000 ARS)</h2>
+            <p class="question">Ты прошёл путь героя. Осталась последняя загадка...</p>
+            <p class="question"><strong>"Это не просто подарок. Это…?"</strong></p>
+            <div class="options">
+                <div class="option" onclick="selectAnswer(this, true)">A) Завершающая инвестиция в улыбку </div>
+                <div class="option" onclick="selectAnswer(this, false)">B) Покупка уважения и благодарности</div>
+                <div class="option" onclick="selectAnswer(this, false)">C) Месть ортодонта</div>
+            </div>
+            <div class="error-message">
+                😈 Ответ неверный! Твоя репутация тает! Попробуй ещё разок!
+            </div>
+            <button class="retry-btn" onclick="retryQuestion()">Попробовать снова</button>
+            <button class="next-btn" onclick="showEnding()">Завершить квест</button>
+        </div>
+
+        <!-- Окончание -->
+        <div class="screen" id="ending">
+            <div class="emoji">🎉</div>
+            <h2 class="location-title">Поздравляем с Днём Рождения!</h2>
+            <div class="final-message">
+                <p>Ты успешно прошёл все испытания!</p>
+                <p>Теперь ты готов к новому этапу жизни — взрослой ответственности и настоящей свободе.</p>
+                <p><strong>Помни:</strong> взрослая жизнь — это не только права, но и обязательства. Это не только получать, но и отдавать.</p>
+                <div class="emoji">🤝</div>
+                <p>Добро пожаловать в мир взрослых отношений, основанных на взаимном уважении!</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentLocation = 0;
+        let correctAnswers = 0;
+        
+        function startQuest() {
+            currentLocation = 1;
+            showLocation('location1');
+            updateProgress();
+            updateLocationCounter();
+        }
+        
+        function showLocation(locationId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(locationId).classList.add('active');
+        }
+        
+        function selectAnswer(option, isCorrect) {
+            const screen = option.closest('.screen');
+            const options = screen.querySelectorAll('.option');
+            const errorMessage = screen.querySelector('.error-message');
+            const retryBtn = screen.querySelector('.retry-btn');
+            const nextBtn = screen.querySelector('.next-btn');
+            const explanation = screen.querySelector('.explanation');
+            
+            // Блокируем все опции
+            options.forEach(opt => {
+                opt.style.pointerEvents = 'none';
+                if (opt === option) {
+                    if (isCorrect) {
+                        opt.classList.add('correct');
+                        correctAnswers++;
+                    } else {
+                        opt.classList.add('wrong');
+                    }
+                }
+            });
+            
+            if (isCorrect) {
+                // Показать объяснение если есть
+                if (explanation) {
+                    setTimeout(() => {
+                        explanation.classList.add('show');
+                    }, 500);
+                }
+                
+                // Показать кнопку "Далее"
+                setTimeout(() => {
+                    nextBtn.classList.add('show');
+                }, 1000);
+            } else {
+                // Показать сообщение об ошибке и кнопку повтора
+                setTimeout(() => {
+                    errorMessage.classList.add('show');
+                    retryBtn.classList.add('show');
+                }, 500);
+            }
+        }
+        
+        function retryQuestion() {
+            const currentScreen = document.querySelector('.screen.active');
+            const options = currentScreen.querySelectorAll('.option');
+            const errorMessage = currentScreen.querySelector('.error-message');
+            const retryBtn = currentScreen.querySelector('.retry-btn');
+            
+            // Сбрасываем состояние опций
+            options.forEach(opt => {
+                opt.style.pointerEvents = 'auto';
+                opt.classList.remove('correct', 'wrong');
+            });
+            
+            // Скрываем сообщение об ошибке и кнопку повтора
+            errorMessage.classList.remove('show');
+            retryBtn.classList.remove('show');
+        }
+        
+        function nextLocation() {
+            currentLocation++;
+            
+            if (currentLocation <= 6) {
+                showLocation('location' + currentLocation);
+                updateProgress();
+                updateLocationCounter();
+            } else {
+                showLocation('final');
+                updateProgress();
+                updateLocationCounter();
+            }
+        }
+        
+        function showEnding() {
+            showLocation('ending');
+            updateProgress();
+            document.getElementById('locationCounter').textContent = 'Квест завершён!';
+        }
+        
+        function updateProgress() {
+            const progress = currentLocation <= 6 ? (currentLocation / 7) * 100 : 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+        
+        function updateLocationCounter() {
+            const counter = document.getElementById('locationCounter');
+            if (currentLocation <= 6) {
+                counter.textContent = `Локация ${currentLocation}/6`;
+            } else {
+                counter.textContent = 'Финал';
+            }
+        }
+    </script>
+</body>
+</html>
